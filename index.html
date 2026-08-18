@@ -470,15 +470,104 @@ saveButton.addEventListener("click",saveProgress);
 resetButton.addEventListener("click",resetProgress);
 
 exportPngButton.addEventListener("click",()=>{
+  if(!hexes.length)return;
+
+  // 現在のズームや画面の表示範囲には影響されず、
+  // スキルツリー全体が入るように画像を自動生成する。
+  const padding=90;
+  const exportScale=2;
+
+  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+  for(const h of hexes){
+    const p=hexToPixel(h.q,h.r);
+    minX=Math.min(minX,p.x-HEX_SIZE);
+    maxX=Math.max(maxX,p.x+HEX_SIZE);
+    minY=Math.min(minY,p.y-HEX_SIZE);
+    maxY=Math.max(maxY,p.y+HEX_SIZE);
+  }
+
+  const width=Math.ceil(maxX-minX+padding*2);
+  const height=Math.ceil(maxY-minY+padding*2);
+
   const exportCanvas=document.createElement("canvas");
-  const scale=2;
-  exportCanvas.width=canvas.width*scale;exportCanvas.height=canvas.height*scale;
+  exportCanvas.width=Math.max(1,Math.ceil(width*exportScale));
+  exportCanvas.height=Math.max(1,Math.ceil(height*exportScale));
+
   const ec=exportCanvas.getContext("2d");
-  ec.fillStyle="#0b1020";ec.fillRect(0,0,exportCanvas.width,exportCanvas.height);
-  ec.drawImage(canvas,0,0,exportCanvas.width,exportCanvas.height);
+  ec.setTransform(exportScale,0,0,exportScale,0,0);
+  ec.fillStyle="#0b1020";
+  ec.fillRect(0,0,width,height);
+
+  // 画面のzoom / offsetを使わず、ツリー自身の座標から描画する。
+  function exportPoint(x,y){
+    return {x:x-minX+padding,y:y-minY+padding};
+  }
+
+  // 接続線
+  for(const h of hexes){
+    const p1=exportPoint(...Object.values(hexToPixel(h.q,h.r)));
+    for(const np of getNeighbors(h.q,h.r)){
+      const other=hexes.find(x=>x.q===np.q&&x.r===np.r);
+      if(!other)continue;
+      if(h.q>other.q||(h.q===other.q&&h.r>other.r))continue;
+
+      const p2=exportPoint(...Object.values(hexToPixel(other.q,other.r)));
+      ec.beginPath();
+      ec.moveTo(p1.x,p1.y);
+      ec.lineTo(p2.x,p2.y);
+      ec.strokeStyle=(h.obtained&&other.obtained)?"#637dff":"#26324d";
+      ec.lineWidth=(h.obtained&&other.obtained)?4:2;
+      ec.stroke();
+    }
+  }
+
+  // 六角形を画像込みで描画
+  for(const h of hexes){
+    const p=exportPoint(...Object.values(hexToPixel(h.q,h.r)));
+    const size=HEX_SIZE;
+
+    ec.save();
+    ec.beginPath();
+    for(let i=0;i<6;i++){
+      const a=Math.PI/180*(60*i-30);
+      const px=p.x+size*Math.cos(a),py=p.y+size*Math.sin(a);
+      if(i===0)ec.moveTo(px,py);else ec.lineTo(px,py);
+    }
+    ec.closePath();
+
+    ec.fillStyle=h.state===1?"#3e65ff":h.state===2?"#b06cff":isAvailable(h)?"#263b73":"#151d33";
+    ec.fill();
+
+    if(h.image.complete&&h.image.naturalWidth){
+      ec.save();
+      ec.clip();
+      const imageSize=size*1.58;
+      const iw=h.image.naturalWidth,ih=h.image.naturalHeight;
+      const scale=Math.max(imageSize/iw,imageSize/ih);
+      ec.globalAlpha=h.obtained?1:.78;
+      ec.drawImage(h.image,p.x-iw*scale/2,p.y-ih*scale/2,iw*scale,ih*scale);
+      ec.restore();
+    }
+
+    ec.beginPath();
+    for(let i=0;i<6;i++){
+      const a=Math.PI/180*(60*i-30);
+      const px=p.x+size*Math.cos(a),py=p.y+size*Math.sin(a);
+      if(i===0)ec.moveTo(px,py);else ec.lineTo(px,py);
+    }
+    ec.closePath();
+
+    if(h.state===1){ec.strokeStyle="#7f9aff";ec.lineWidth=4}
+    else if(h.state===2){ec.strokeStyle="#d8a8ff";ec.lineWidth=4}
+    else if(isAvailable(h)){ec.strokeStyle="#5f78ff";ec.lineWidth=2.5}
+    else{ec.strokeStyle="#38445f";ec.lineWidth=1.5}
+    ec.stroke();
+    ec.restore();
+  }
+
   const tab=window.open("","_blank");
   if(!tab){alert("ポップアップを許可してください。");return}
-  tab.document.write(`<html><head><meta charset="utf-8"><title>Skill Tree</title><style>html,body{margin:0;background:#0b1020}body{display:flex;justify-content:center;overflow:auto}img{max-width:100%;height:auto}</style></head><body><img src="${exportCanvas.toDataURL("image/png")}"></body></html>`);
+  tab.document.write(`<html><head><meta charset="utf-8"><title>Skill Tree</title><style>html,body{margin:0;background:#0b1020}body{display:flex;justify-content:center;align-items:flex-start;overflow:auto;padding:12px}img{display:block;max-width:none;width:auto;height:auto}</style></head><body><img src="${exportCanvas.toDataURL("image/png")}"></body></html>`);
   tab.document.close();
 });
 
