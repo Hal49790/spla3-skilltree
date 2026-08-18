@@ -469,106 +469,162 @@ randomSeedButton.addEventListener("click",()=>{seedInput.value=randomSeed();gene
 saveButton.addEventListener("click",saveProgress);
 resetButton.addEventListener("click",resetProgress);
 
-exportPngButton.addEventListener("click",()=>{
+exportPngButton.addEventListener("click",async()=>{
   if(!hexes.length)return;
 
-  // 現在のズームや画面の表示範囲には影響されず、
-  // スキルツリー全体が入るように画像を自動生成する。
-  const padding=90;
-  const exportScale=2;
+  // 現在の画面のズーム・移動位置は一切使わず、
+  // ツリー自身の全ノード座標から画像サイズを決定します。
+  // そのため、どれだけ拡大・移動していても必ず全体が入ります。
+  const button=exportPngButton;
+  const originalText=button.textContent;
+  button.disabled=true;
+  button.textContent="画像を生成中…";
 
-  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
-  for(const h of hexes){
-    const p=hexToPixel(h.q,h.r);
-    minX=Math.min(minX,p.x-HEX_SIZE);
-    maxX=Math.max(maxX,p.x+HEX_SIZE);
-    minY=Math.min(minY,p.y-HEX_SIZE);
-    maxY=Math.max(maxY,p.y+HEX_SIZE);
-  }
+  try{
+    // 画像の読み込みがまだ終わっていない場合でも、
+    // 生成時には全画像を待ってから描画します。
+    await Promise.all(hexes.map(h=>{
+      if(h.image.complete && h.image.naturalWidth>0)return Promise.resolve();
+      return new Promise(resolve=>{
+        const done=()=>{cleanup();resolve()};
+        const cleanup=()=>{
+          h.image.removeEventListener("load",done);
+          h.image.removeEventListener("error",done);
+        };
+        h.image.addEventListener("load",done,{once:true});
+        h.image.addEventListener("error",done,{once:true});
+      });
+    }));
 
-  const width=Math.ceil(maxX-minX+padding*2);
-  const height=Math.ceil(maxY-minY+padding*2);
+    // 六角形の外周 + 線幅を確実に含める。
+    const radius=HEX_SIZE;
+    const strokeMargin=6;
+    const padding=48;
+    let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
 
-  const exportCanvas=document.createElement("canvas");
-  exportCanvas.width=Math.max(1,Math.ceil(width*exportScale));
-  exportCanvas.height=Math.max(1,Math.ceil(height*exportScale));
-
-  const ec=exportCanvas.getContext("2d");
-  ec.setTransform(exportScale,0,0,exportScale,0,0);
-  ec.fillStyle="#0b1020";
-  ec.fillRect(0,0,width,height);
-
-  // 画面のzoom / offsetを使わず、ツリー自身の座標から描画する。
-  function exportPoint(x,y){
-    return {x:x-minX+padding,y:y-minY+padding};
-  }
-
-  // 接続線
-  for(const h of hexes){
-    const p1=exportPoint(...Object.values(hexToPixel(h.q,h.r)));
-    for(const np of getNeighbors(h.q,h.r)){
-      const other=hexes.find(x=>x.q===np.q&&x.r===np.r);
-      if(!other)continue;
-      if(h.q>other.q||(h.q===other.q&&h.r>other.r))continue;
-
-      const p2=exportPoint(...Object.values(hexToPixel(other.q,other.r)));
-      ec.beginPath();
-      ec.moveTo(p1.x,p1.y);
-      ec.lineTo(p2.x,p2.y);
-      ec.strokeStyle=(h.obtained&&other.obtained)?"#637dff":"#26324d";
-      ec.lineWidth=(h.obtained&&other.obtained)?4:2;
-      ec.stroke();
+    for(const h of hexes){
+      const p=hexToPixel(h.q,h.r);
+      minX=Math.min(minX,p.x-radius-strokeMargin);
+      maxX=Math.max(maxX,p.x+radius+strokeMargin);
+      minY=Math.min(minY,p.y-radius-strokeMargin);
+      maxY=Math.max(maxY,p.y+radius+strokeMargin);
     }
-  }
 
-  // 六角形を画像込みで描画
-  for(const h of hexes){
-    const p=exportPoint(...Object.values(hexToPixel(h.q,h.r)));
-    const size=HEX_SIZE;
+    const contentWidth=maxX-minX;
+    const contentHeight=maxY-minY;
 
-    ec.save();
-    ec.beginPath();
-    for(let i=0;i<6;i++){
-      const a=Math.PI/180*(60*i-30);
-      const px=p.x+size*Math.cos(a),py=p.y+size*Math.sin(a);
-      if(i===0)ec.moveTo(px,py);else ec.lineTo(px,py);
+    // 基本は2倍解像度。巨大なツリーだけ自動的に縮小して、
+    // スマホでもブラウザがCanvas上限で失敗しにくいようにします。
+    const maxDimension=6000;
+    const desiredScale=2;
+    const autoScale=Math.min(
+      desiredScale,
+      maxDimension/(contentWidth+padding*2),
+      maxDimension/(contentHeight+padding*2)
+    );
+    const exportScale=Math.max(0.5,autoScale);
+
+    const width=Math.max(1,Math.ceil((contentWidth+padding*2)*exportScale));
+    const height=Math.max(1,Math.ceil((contentHeight+padding*2)*exportScale));
+
+    const exportCanvas=document.createElement("canvas");
+    exportCanvas.width=width;
+    exportCanvas.height=height;
+
+    const ec=exportCanvas.getContext("2d");
+    ec.setTransform(exportScale,0,0,exportScale,0,0);
+    ec.imageSmoothingEnabled=true;
+    ec.imageSmoothingQuality="high";
+    ec.fillStyle="#0b1020";
+    ec.fillRect(0,0,width/exportScale,height/exportScale);
+
+    function exportPoint(x,y){
+      return {x:x-minX+padding,y:y-minY+padding};
     }
-    ec.closePath();
 
-    ec.fillStyle=h.state===1?"#3e65ff":h.state===2?"#b06cff":isAvailable(h)?"#263b73":"#151d33";
-    ec.fill();
+    // 接続線を描画
+    for(const h of hexes){
+      const hp=hexToPixel(h.q,h.r);
+      const p1=exportPoint(hp.x,hp.y);
+      for(const np of getNeighbors(h.q,h.r)){
+        const other=hexes.find(x=>x.q===np.q&&x.r===np.r);
+        if(!other)continue;
+        if(h.q>other.q||(h.q===other.q&&h.r>other.r))continue;
 
-    if(h.image.complete&&h.image.naturalWidth){
+        const op=hexToPixel(other.q,other.r);
+        const p2=exportPoint(op.x,op.y);
+        ec.beginPath();
+        ec.moveTo(p1.x,p1.y);
+        ec.lineTo(p2.x,p2.y);
+        const connected=h.obtained&&other.obtained;
+        ec.strokeStyle=connected?"#637dff":"#26324d";
+        ec.lineWidth=connected?4:2;
+        ec.stroke();
+      }
+    }
+
+    // 全ノードを描画
+    for(const h of hexes){
+      const wp=hexToPixel(h.q,h.r);
+      const p=exportPoint(wp.x,wp.y);
+      const size=HEX_SIZE;
+
       ec.save();
-      ec.clip();
-      const imageSize=size*1.58;
-      const iw=h.image.naturalWidth,ih=h.image.naturalHeight;
-      const scale=Math.max(imageSize/iw,imageSize/ih);
-      ec.globalAlpha=h.obtained?1:.78;
-      ec.drawImage(h.image,p.x-iw*scale/2,p.y-ih*scale/2,iw*scale,ih*scale);
+      ec.beginPath();
+      for(let i=0;i<6;i++){
+        const a=Math.PI/180*(60*i-30);
+        const px=p.x+size*Math.cos(a);
+        const py=p.y+size*Math.sin(a);
+        if(i===0)ec.moveTo(px,py);else ec.lineTo(px,py);
+      }
+      ec.closePath();
+
+      ec.fillStyle=h.state===1?"#3e65ff":h.state===2?"#b06cff":isAvailable(h)?"#263b73":"#151d33";
+      ec.fill();
+
+      if(h.image.complete&&h.image.naturalWidth>0){
+        ec.save();
+        ec.clip();
+        const imageSize=size*1.58;
+        const iw=h.image.naturalWidth,ih=h.image.naturalHeight;
+        const imageScale=Math.max(imageSize/iw,imageSize/ih);
+        ec.globalAlpha=h.obtained?1:.78;
+        ec.drawImage(h.image,p.x-iw*imageScale/2,p.y-ih*imageScale/2,iw*imageScale,ih*imageScale);
+        ec.restore();
+      }
+
+      ec.beginPath();
+      for(let i=0;i<6;i++){
+        const a=Math.PI/180*(60*i-30);
+        const px=p.x+size*Math.cos(a);
+        const py=p.y+size*Math.sin(a);
+        if(i===0)ec.moveTo(px,py);else ec.lineTo(px,py);
+      }
+      ec.closePath();
+
+      if(h.state===1){ec.strokeStyle="#7f9aff";ec.lineWidth=4}
+      else if(h.state===2){ec.strokeStyle="#d8a8ff";ec.lineWidth=4}
+      else if(isAvailable(h)){ec.strokeStyle="#5f78ff";ec.lineWidth=2.5}
+      else{ec.strokeStyle="#38445f";ec.lineWidth=1.5}
+      ec.stroke();
       ec.restore();
     }
 
-    ec.beginPath();
-    for(let i=0;i<6;i++){
-      const a=Math.PI/180*(60*i-30);
-      const px=p.x+size*Math.cos(a),py=p.y+size*Math.sin(a);
-      if(i===0)ec.moveTo(px,py);else ec.lineTo(px,py);
+    const dataUrl=exportCanvas.toDataURL("image/png");
+    const tab=window.open("","_blank");
+    if(!tab){
+      alert("ポップアップを許可してください。");
+      return;
     }
-    ec.closePath();
-
-    if(h.state===1){ec.strokeStyle="#7f9aff";ec.lineWidth=4}
-    else if(h.state===2){ec.strokeStyle="#d8a8ff";ec.lineWidth=4}
-    else if(isAvailable(h)){ec.strokeStyle="#5f78ff";ec.lineWidth=2.5}
-    else{ec.strokeStyle="#38445f";ec.lineWidth=1.5}
-    ec.stroke();
-    ec.restore();
+    tab.document.write(`<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Skill Tree</title><style>html,body{margin:0;background:#0b1020}body{display:flex;justify-content:center;align-items:flex-start;overflow:auto;padding:12px}img{display:block;width:auto;height:auto;max-width:none}</style></head><body><img src="${dataUrl}" alt="Skill Tree"></body></html>`);
+    tab.document.close();
+  }catch(error){
+    console.error(error);
+    alert("画像の生成に失敗しました。ツリーのサイズを少し小さくして、もう一度試してください。");
+  }finally{
+    button.disabled=false;
+    button.textContent=originalText;
   }
-
-  const tab=window.open("","_blank");
-  if(!tab){alert("ポップアップを許可してください。");return}
-  tab.document.write(`<html><head><meta charset="utf-8"><title>Skill Tree</title><style>html,body{margin:0;background:#0b1020}body{display:flex;justify-content:center;align-items:flex-start;overflow:auto;padding:12px}img{display:block;max-width:none;width:auto;height:auto}</style></head><body><img src="${exportCanvas.toDataURL("image/png")}"></body></html>`);
-  tab.document.close();
 });
 
 resizeCanvas();
