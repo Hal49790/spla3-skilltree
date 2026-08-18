@@ -1,0 +1,1 @@
+window.SKILLTREE_API_BASE = "";
