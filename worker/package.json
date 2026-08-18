@@ -1,0 +1,12 @@
+{
+  "name": "spla3-skilltree-api",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.33.1"
+  },
+  "dependencies": {}
+}

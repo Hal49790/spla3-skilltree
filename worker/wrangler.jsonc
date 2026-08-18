@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "spla3-skilltree-api",
+  "main": "src.ts",
+  "compatibility_date": "2026-08-19",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "spla3-skilltree",
+      "database_id": "PUT-YOUR-D1-DATABASE-ID-HERE"
+    }
+  ],
+  "vars": {
+    "PUBLIC_WEB_URL": "https://YOUR_GITHUB_USERNAME.github.io/YOUR_REPOSITORY/"
+  }
+}
