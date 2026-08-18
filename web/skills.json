@@ -1,6 +1,642 @@
 [
   {
-    "filename": "ここに画像ファイル名.png",
-    "name": "スキル名"
+    "filename": "４Kスコープ.png",
+    "name": "４Kスコープ"
+  },
+  {
+    "filename": "4Kスコープカスタム.png",
+    "name": "4Kスコープカスタム"
+  },
+  {
+    "filename": "14式竹筒銃・乙.png",
+    "name": "14式竹筒銃・乙"
+  },
+  {
+    "filename": "14式竹筒銃・甲.png",
+    "name": "14式竹筒銃・甲"
+  },
+  {
+    "filename": "24式張替傘・乙.png",
+    "name": "24式張替傘・乙"
+  },
+  {
+    "filename": "24式張替傘・甲.png",
+    "name": "24式張替傘・甲"
+  },
+  {
+    "filename": "52ガロン.png",
+    "name": "52ガロン"
+  },
+  {
+    "filename": "52ガロンデコ.png",
+    "name": "52ガロンデコ"
+  },
+  {
+    "filename": "96ガロン.png",
+    "name": "96ガロン"
+  },
+  {
+    "filename": "96ガロンデコ.png",
+    "name": "96ガロンデコ"
+  },
+  {
+    "filename": "96ガロン爪.png",
+    "name": "96ガロン爪"
+  },
+  {
+    "filename": "H3リールガン.png",
+    "name": "H3リールガン"
+  },
+  {
+    "filename": "H3リールガンD.png",
+    "name": "H3リールガンD"
+  },
+  {
+    "filename": "H3リールガンSNAK.png",
+    "name": "H3リールガンSNAK"
+  },
+  {
+    "filename": "L3リールガン.png",
+    "name": "L3リールガン"
+  },
+  {
+    "filename": "L3リールガン箔.png",
+    "name": "L3リールガン箔"
+  },
+  {
+    "filename": "LACT-450.png",
+    "name": "LACT-450"
+  },
+  {
+    "filename": "LACT-450MILK.png",
+    "name": "LACT-450MILK"
+  },
+  {
+    "filename": "LACT-450デコ.png",
+    "name": "LACT-450デコ"
+  },
+  {
+    "filename": "LL3リールガンD.png",
+    "name": "LL3リールガンD"
+  },
+  {
+    "filename": "N-ZAP85.png",
+    "name": "N-ZAP85"
+  },
+  {
+    "filename": "N-ZAP89.png",
+    "name": "N-ZAP89"
+  },
+  {
+    "filename": "R-PEN 5B.png",
+    "name": "R-PEN 5B"
+  },
+  {
+    "filename": "R-PEN 5H.png",
+    "name": "R-PEN 5H"
+  },
+  {
+    "filename": "S-BLAST 91.png",
+    "name": "S-BLAST 91"
+  },
+  {
+    "filename": "S-BLAST 92.png",
+    "name": "S-BLAST 92"
+  },
+  {
+    "filename": "イグザミナー.png",
+    "name": "イグザミナー"
+  },
+  {
+    "filename": "イグザミナーヒュー.png",
+    "name": "イグザミナーヒュー"
+  },
+  {
+    "filename": "ヴァリアブルローラー.png",
+    "name": "ヴァリアブルローラー"
+  },
+  {
+    "filename": "ヴァリアブルローラーフォイル.png",
+    "name": "ヴァリアブルローラーフォイル"
+  },
+  {
+    "filename": "エクスプロッシャー.png",
+    "name": "エクスプロッシャー"
+  },
+  {
+    "filename": "エクスプロッシャーカスタム.png",
+    "name": "エクスプロッシャーカスタム"
+  },
+  {
+    "filename": "オーバーフロッシャー.png",
+    "name": "オーバーフロッシャー"
+  },
+  {
+    "filename": "オーバーフロッシャーデコ.png",
+    "name": "オーバーフロッシャーデコ"
+  },
+  {
+    "filename": "カーボンローラー.png",
+    "name": "カーボンローラー"
+  },
+  {
+    "filename": "カーボンローラーANGL.png",
+    "name": "カーボンローラーANGL"
+  },
+  {
+    "filename": "カーボンローラーデコ.png",
+    "name": "カーボンローラーデコ"
+  },
+  {
+    "filename": "ガエンFF.png",
+    "name": "ガエンFF"
+  },
+  {
+    "filename": "ガエンFFカスタム.png",
+    "name": "ガエンFFカスタム"
+  },
+  {
+    "filename": "キャンピングシェルター.png",
+    "name": "キャンピングシェルター"
+  },
+  {
+    "filename": "キャンピングシェルターCREM.png",
+    "name": "キャンピングシェルターCREM"
+  },
+  {
+    "filename": "キャンピングシェルターソレーラ.png",
+    "name": "キャンピングシェルターソレーラ"
+  },
+  {
+    "filename": "クアッドホッパーブラック.png",
+    "name": "クアッドホッパーブラック"
+  },
+  {
+    "filename": "クアッドホッパーホワイト.png",
+    "name": "クアッドホッパーホワイト"
+  },
+  {
+    "filename": "クーゲルシュライバー.png",
+    "name": "クーゲルシュライバー"
+  },
+  {
+    "filename": "クーゲルシュライバーヒュー.png",
+    "name": "クーゲルシュライバーヒュー"
+  },
+  {
+    "filename": "クラッシュブラスター.png",
+    "name": "クラッシュブラスター"
+  },
+  {
+    "filename": "クラッシュブラスターネオ.png",
+    "name": "クラッシュブラスターネオ"
+  },
+  {
+    "filename": "ケルビン525.png",
+    "name": "ケルビン525"
+  },
+  {
+    "filename": "ケルビン525デコ.png",
+    "name": "ケルビン525デコ"
+  },
+  {
+    "filename": "ジェットスイーパー.png",
+    "name": "ジェットスイーパー"
+  },
+  {
+    "filename": "ジェットスイーパーCOBR.png",
+    "name": "ジェットスイーパーCOBR"
+  },
+  {
+    "filename": "ジェットスイーパーカスタム.png",
+    "name": "ジェットスイーパーカスタム"
+  },
+  {
+    "filename": "ジムワイパー.png",
+    "name": "ジムワイパー"
+  },
+  {
+    "filename": "ジムワイパーヒュー.png",
+    "name": "ジムワイパーヒュー"
+  },
+  {
+    "filename": "ジムワイパー封.png",
+    "name": "ジムワイパー封"
+  },
+  {
+    "filename": "シャープマーカGECK.png",
+    "name": "シャープマーカGECK"
+  },
+  {
+    "filename": "シャープマーカー.png",
+    "name": "シャープマーカー"
+  },
+  {
+    "filename": "シャープマーカーネオ.png",
+    "name": "シャープマーカーネオ"
+  },
+  {
+    "filename": "スクイックリンα.png",
+    "name": "スクイックリンα"
+  },
+  {
+    "filename": "スクイックリンβ.png",
+    "name": "スクイックリンβ"
+  },
+  {
+    "filename": "スクリュースロッシャー.png",
+    "name": "スクリュースロッシャー"
+  },
+  {
+    "filename": "スクリュースロッシャーネオ.png",
+    "name": "スクリュースロッシャーネオ"
+  },
+  {
+    "filename": "スパイガジェット.png",
+    "name": "スパイガジェット"
+  },
+  {
+    "filename": "スパイガジェットソレーラ.png",
+    "name": "スパイガジェットソレーラ"
+  },
+  {
+    "filename": "スパイガジェット繚.png",
+    "name": "スパイガジェット繚"
+  },
+  {
+    "filename": "スパッタリー.png",
+    "name": "スパッタリー"
+  },
+  {
+    "filename": "スパッタリーOWL.png",
+    "name": "スパッタリーOWL"
+  },
+  {
+    "filename": "スパッタリーヒュー.png",
+    "name": "スパッタリーヒュー"
+  },
+  {
+    "filename": "スプラシューター.png",
+    "name": "スプラシューター"
+  },
+  {
+    "filename": "スプラシューターコラボ.png",
+    "name": "スプラシューターコラボ"
+  },
+  {
+    "filename": "スプラシューター皇.png",
+    "name": "スプラシューター皇"
+  },
+  {
+    "filename": "スプラスコープ.png",
+    "name": "スプラスコープ"
+  },
+  {
+    "filename": "スプラスコープFRST.png",
+    "name": "スプラスコープFRST"
+  },
+  {
+    "filename": "スプラスコープコラボ.png",
+    "name": "スプラスコープコラボ"
+  },
+  {
+    "filename": "スプラスピナー.png",
+    "name": "スプラスピナー"
+  },
+  {
+    "filename": "スプラスピナーPYTN.png",
+    "name": "スプラスピナーPYTN"
+  },
+  {
+    "filename": "スプラスピナーコラボ.png",
+    "name": "スプラスピナーコラボ"
+  },
+  {
+    "filename": "スプラチャージャー.png",
+    "name": "スプラチャージャー"
+  },
+  {
+    "filename": "スプラチャージャーFRST.png",
+    "name": "スプラチャージャーFRST"
+  },
+  {
+    "filename": "スプラチャージャーコラボ.png",
+    "name": "スプラチャージャーコラボ"
+  },
+  {
+    "filename": "スプラマニューバ.png",
+    "name": "スプラマニューバ"
+  },
+  {
+    "filename": "スプラマニューバコラボ.png",
+    "name": "スプラマニューバコラボ"
+  },
+  {
+    "filename": "スプラマニューバ耀.png",
+    "name": "スプラマニューバ耀"
+  },
+  {
+    "filename": "スプラローラー.png",
+    "name": "スプラローラー"
+  },
+  {
+    "filename": "スプラローラーコラボ.png",
+    "name": "スプラローラーコラボ"
+  },
+  {
+    "filename": "スペースシューター.png",
+    "name": "スペースシューター"
+  },
+  {
+    "filename": "スペースシューターコラボ.png",
+    "name": "スペースシューターコラボ"
+  },
+  {
+    "filename": "ソイチューバー.png",
+    "name": "ソイチューバー"
+  },
+  {
+    "filename": "ソイチューバーカスタム.png",
+    "name": "ソイチューバーカスタム"
+  },
+  {
+    "filename": "ダイナモローラー.png",
+    "name": "ダイナモローラー"
+  },
+  {
+    "filename": "ダイナモローラーテスラ.png",
+    "name": "ダイナモローラーテスラ"
+  },
+  {
+    "filename": "ダイナモローラー冥.png",
+    "name": "ダイナモローラー冥"
+  },
+  {
+    "filename": "デュアルスイーパー.png",
+    "name": "デュアルスイーパー"
+  },
+  {
+    "filename": "デュアルスイーパーカスタム.png",
+    "name": "デュアルスイーパーカスタム"
+  },
+  {
+    "filename": "デュアルスイーパー蹄.png",
+    "name": "デュアルスイーパー蹄"
+  },
+  {
+    "filename": "デンタルワイパースミ.png",
+    "name": "デンタルワイパースミ"
+  },
+  {
+    "filename": "デンタルワイパーミント.png",
+    "name": "デンタルワイパーミント"
+  },
+  {
+    "filename": "トライストリンガー.png",
+    "name": "トライストリンガー"
+  },
+  {
+    "filename": "トライストリンガーコラボ.png",
+    "name": "トライストリンガーコラボ"
+  },
+  {
+    "filename": "トライストリンガー燈.png",
+    "name": "トライストリンガー燈"
+  },
+  {
+    "filename": "ドライブワイパー.png",
+    "name": "ドライブワイパー"
+  },
+  {
+    "filename": "ドライブワイパーRUST.png",
+    "name": "ドライブワイパーRUST"
+  },
+  {
+    "filename": "ドライブワイパーデコ.png",
+    "name": "ドライブワイパーデコ"
+  },
+  {
+    "filename": "ノヴァブラスター.png",
+    "name": "ノヴァブラスター"
+  },
+  {
+    "filename": "ノヴァブラスターネオ.png",
+    "name": "ノヴァブラスターネオ"
+  },
+  {
+    "filename": "ノーチラス47.png",
+    "name": "ノーチラス47"
+  },
+  {
+    "filename": "ノーチラス79.png",
+    "name": "ノーチラス79"
+  },
+  {
+    "filename": "ハイドラント.png",
+    "name": "ハイドラント"
+  },
+  {
+    "filename": "ハイドラントカスタム.png",
+    "name": "ハイドラントカスタム"
+  },
+  {
+    "filename": "ハイドラント圧.png",
+    "name": "ハイドラント圧"
+  },
+  {
+    "filename": "バケットスロッシャー.png",
+    "name": "バケットスロッシャー"
+  },
+  {
+    "filename": "バケットスロッシャーデコ.png",
+    "name": "バケットスロッシャーデコ"
+  },
+  {
+    "filename": "パブロ.png",
+    "name": "パブロ"
+  },
+  {
+    "filename": "パブロヒュー.png",
+    "name": "パブロヒュー"
+  },
+  {
+    "filename": "パラシェルター.png",
+    "name": "パラシェルター"
+  },
+  {
+    "filename": "パラシェルターソレーラ.png",
+    "name": "パラシェルターソレーラ"
+  },
+  {
+    "filename": "バレルスピナー.png",
+    "name": "バレルスピナー"
+  },
+  {
+    "filename": "バレルスピナーデコ.png",
+    "name": "バレルスピナーデコ"
+  },
+  {
+    "filename": "ヒッセン.png",
+    "name": "ヒッセン"
+  },
+  {
+    "filename": "ヒッセンASH.png",
+    "name": "ヒッセンASH"
+  },
+  {
+    "filename": "ヒッセンヒュー.png",
+    "name": "ヒッセンヒュー"
+  },
+  {
+    "filename": "フィンセント.png",
+    "name": "フィンセント"
+  },
+  {
+    "filename": "フィンセントBRNZ.png",
+    "name": "フィンセントBRNZ"
+  },
+  {
+    "filename": "フィンセントヒュー.png",
+    "name": "フィンセントヒュー"
+  },
+  {
+    "filename": "プライムシューター.png",
+    "name": "プライムシューター"
+  },
+  {
+    "filename": "プライムシューターFRZN.png",
+    "name": "プライムシューターFRZN"
+  },
+  {
+    "filename": "プライムシューターコラボ.png",
+    "name": "プライムシューターコラボ"
+  },
+  {
+    "filename": "フルイドV.png",
+    "name": "フルイドV"
+  },
+  {
+    "filename": "フルイドVカスタム.png",
+    "name": "フルイドVカスタム"
+  },
+  {
+    "filename": "プロモデラーMG.png",
+    "name": "プロモデラーMG"
+  },
+  {
+    "filename": "プロモデラーRG.png",
+    "name": "プロモデラーRG"
+  },
+  {
+    "filename": "プロモデラー虹.png",
+    "name": "プロモデラー虹"
+  },
+  {
+    "filename": "ボールドマーカー.png",
+    "name": "ボールドマーカー"
+  },
+  {
+    "filename": "ボールドマーカーネオ.png",
+    "name": "ボールドマーカーネオ"
+  },
+  {
+    "filename": "ホクサイ.png",
+    "name": "ホクサイ"
+  },
+  {
+    "filename": "ホクサイヒュー.png",
+    "name": "ホクサイヒュー"
+  },
+  {
+    "filename": "ホクサイ彗.png",
+    "name": "ホクサイ彗"
+  },
+  {
+    "filename": "ホットブラスター.png",
+    "name": "ホットブラスター"
+  },
+  {
+    "filename": "ホットブラスターカスタム.png",
+    "name": "ホットブラスターカスタム"
+  },
+  {
+    "filename": "ホットブラスター艶.png",
+    "name": "ホットブラスター艶"
+  },
+  {
+    "filename": "ボトルガイザー.png",
+    "name": "ボトルガイザー"
+  },
+  {
+    "filename": "ボトルガイザーフォイル.png",
+    "name": "ボトルガイザーフォイル"
+  },
+  {
+    "filename": "モップリン.png",
+    "name": "モップリン"
+  },
+  {
+    "filename": "モップリンD.png",
+    "name": "モップリンD"
+  },
+  {
+    "filename": "モップリン角.png",
+    "name": "モップリン角"
+  },
+  {
+    "filename": "もみじシューター.png",
+    "name": "もみじシューター"
+  },
+  {
+    "filename": "ラピッドブラスター.png",
+    "name": "ラピッドブラスター"
+  },
+  {
+    "filename": "ラピッドブラスターエリート.png",
+    "name": "ラピッドブラスターエリート"
+  },
+  {
+    "filename": "ラピッドブラスターエリートWNTR.png",
+    "name": "ラピッドブラスターエリートWNTR"
+  },
+  {
+    "filename": "ラピッドブラスターエリートデコ.png",
+    "name": "ラピッドブラスターエリートデコ"
+  },
+  {
+    "filename": "ラピッドブラスターデコ.png",
+    "name": "ラピッドブラスターデコ"
+  },
+  {
+    "filename": "リッター４K.png",
+    "name": "リッター４K"
+  },
+  {
+    "filename": "リッター4Kカスタム.png",
+    "name": "リッター4Kカスタム"
+  },
+  {
+    "filename": "ロングブラスター.png",
+    "name": "ロングブラスター"
+  },
+  {
+    "filename": "ロングブラスターカスタム.png",
+    "name": "ロングブラスターカスタム"
+  },
+  {
+    "filename": "ワイドローラー.png",
+    "name": "ワイドローラー"
+  },
+  {
+    "filename": "ワイドローラーコラボ.png",
+    "name": "ワイドローラーコラボ"
+  },
+  {
+    "filename": "ワイドローラー惑.png",
+    "name": "ワイドローラー惑"
+  },
+  {
+    "filename": "わかばシューター.png",
+    "name": "わかばシューター"
   }
 ]
