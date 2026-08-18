@@ -2,8 +2,8 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HEX SKILL TREE</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>スプラ3 SKILL TREE</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#0b1020;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overflow:hidden}
@@ -28,7 +28,19 @@ canvas.dragging{cursor:grabbing}
 .skill-detail{position:absolute;right:18px;bottom:18px;width:280px;background:rgba(12,18,35,.94);border:1px solid #34415f;border-radius:12px;padding:16px;display:none;backdrop-filter:blur(10px)}
 .skill-detail.show{display:block}.skill-detail h2{margin:0 0 8px;font-size:19px}.skill-detail p{margin:0;color:#9aa7c1;font-size:12px;line-height:1.6}
 .seed-badge{display:inline-block;margin-top:8px;padding:4px 8px;border-radius:6px;background:#1d2741;color:#aeb9d2;font-size:11px}
-@media(max-width:700px){.app{flex-direction:column}.sidebar{width:100%;min-width:0;height:360px;padding:12px}.canvas-area{height:calc(100vh - 360px)}.skill-detail{right:10px;bottom:10px;width:220px}}
+@media(max-width:700px){
+body{overflow:hidden;touch-action:none}
+.app{display:block;height:100dvh}
+.sidebar{position:absolute;left:0;right:0;top:0;width:auto;min-width:0;height:auto;max-height:42dvh;padding:12px;background:rgba(17,24,43,.96);border:0;border-bottom:1px solid #29334d;overflow-y:auto;z-index:20;backdrop-filter:blur(10px)}
+.title{font-size:20px;margin-bottom:2px}.subtitle{margin-bottom:8px}
+label{margin:8px 0 5px}input{padding:9px;font-size:14px}button{padding:10px;margin-top:7px}
+.info{display:none}.status{margin-top:8px}
+.canvas-area{position:absolute;inset:0;width:100%;height:100dvh}
+canvas{touch-action:none}
+.top-info{top:auto;right:10px;bottom:10px;font-size:11px;padding:7px 10px;z-index:5}
+.skill-detail{right:10px;left:10px;bottom:42px;width:auto;max-height:28dvh;overflow:auto;padding:12px;z-index:10}
+}
+@media(max-width:420px){.seed-row{gap:5px}.seed-row button{width:68px}.title{font-size:18px}.subtitle{font-size:11px}}
 </style>
 </head>
 <body>
@@ -372,6 +384,64 @@ function resizeCanvas(){
   ctx.setTransform(dpr,0,0,dpr,0,0);draw();
 }
 window.addEventListener("resize",resizeCanvas);
+
+
+// Touch controls: one finger pans / taps; two fingers pinch-zoom.
+let touchState={moved:false,pinch:false,startX:0,startY:0,lastX:0,lastY:0,startTime:0,startDistance:0,startZoom:1};
+
+function touchDistance(a,b){return Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)}
+function touchCenter(a,b){return{x:(a.clientX+b.clientX)/2,y:(a.clientY+b.clientY)/2}}
+
+canvas.addEventListener("touchstart",e=>{
+  e.preventDefault();
+  if(e.touches.length===1){
+    const t=e.touches[0];
+    touchState={moved:false,pinch:false,startX:t.clientX,startY:t.clientY,lastX:t.clientX,lastY:t.clientY,startTime:Date.now(),startDistance:0,startZoom:zoom};
+  }else if(e.touches.length>=2){
+    touchState.pinch=true;touchState.moved=true;
+    touchState.startDistance=touchDistance(e.touches[0],e.touches[1]);
+    touchState.startZoom=zoom;
+  }
+},{passive:false});
+
+canvas.addEventListener("touchmove",e=>{
+  e.preventDefault();
+  const r=canvas.getBoundingClientRect();
+  if(e.touches.length===1&&!touchState.pinch){
+    const t=e.touches[0],dx=t.clientX-touchState.lastX,dy=t.clientY-touchState.lastY;
+    if(Math.abs(t.clientX-touchState.startX)>6||Math.abs(t.clientY-touchState.startY)>6)touchState.moved=true;
+    offsetX+=dx;offsetY+=dy;touchState.lastX=t.clientX;touchState.lastY=t.clientY;draw();
+  }else if(e.touches.length>=2){
+    const a=e.touches[0],b=e.touches[1],c=touchCenter(a,b),d=touchDistance(a,b);
+    if(!touchState.pinch){touchState.pinch=true;touchState.startDistance=d;touchState.startZoom=zoom}
+    const oldZoom=zoom,ratio=d/touchState.startDistance;
+    zoom=Math.max(.35,Math.min(2.5,touchState.startZoom*ratio));
+    const cx=c.x-r.left,cy=c.y-r.top;
+    offsetX=cx-(cx-offsetX)*(zoom/oldZoom);offsetY=cy-(cy-offsetY)*(zoom/oldZoom);
+    touchState.moved=true;draw();
+  }
+},{passive:false});
+
+canvas.addEventListener("touchend",e=>{
+  e.preventDefault();
+  if(!touchState.moved&&!touchState.pinch&&Date.now()-touchState.startTime<450){
+    const t=e.changedTouches[0],r=canvas.getBoundingClientRect(),h=getHexAtMouse(t.clientX-r.left,t.clientY-r.top);
+    if(!h){skillDetail.classList.remove("show")}
+    else{
+      if(h.state===0){if(isAvailable(h)){h.state=1;h.obtained=true}}
+      else if(h.state===1){h.state=2;h.obtained=true}
+      else{h.state=0;h.obtained=false}
+      updateStatus();draw();
+      detailName.textContent=h.name;
+      detailText.textContent=`${h.filename} / ${h.state===1?"取得済み":h.state===2?"使用済み":isAvailable(h)?"取得可能":"未取得"}`;
+      skillDetail.classList.add("show");
+    }
+  }
+  if(e.touches.length===0){touchState.pinch=false}
+  else if(e.touches.length===1){touchState.pinch=false;touchState.moved=true;touchState.lastX=e.touches[0].clientX;touchState.lastY=e.touches[0].clientY}
+},{passive:false});
+
+canvas.addEventListener("touchcancel",e=>{e.preventDefault();touchState.pinch=false},{passive:false});
 
 canvas.addEventListener("mousedown",e=>{
   dragging=false;lastMouseX=e.clientX;lastMouseY=e.clientY;
