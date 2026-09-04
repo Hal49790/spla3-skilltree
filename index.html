@@ -21,7 +21,7 @@ input{width:100%;padding:11px 12px;border-radius:8px;border:2px solid #555862;ba
 input:focus{border-color:var(--yellow);box-shadow:0 0 0 3px rgba(243,255,25,.12)}
 button{width:100%;padding:12px 11px;margin-top:8px;border:0;border-radius:7px;background:#343640;color:#fff;font-size:14px;font-weight:1000;cursor:pointer;box-shadow:4px 4px 0 rgba(0,0,0,.5)}
 button:hover{filter:brightness(1.1);transform:translate(-1px,-1px)}button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 rgba(0,0,0,.5)}
-#generateButton{background:var(--yellow);color:#07090c;font-size:17px}#exportPngButton{background:var(--pink);color:#08090d;font-size:16px}
+#generateButton{background:var(--yellow);color:#07090c;font-size:17px}#exportPngButton{background:var(--pink);color:#08090d;font-size:16px}#discordButton{background:var(--cyan);color:#061014;font-size:16px}
 .status{margin-top:12px;padding:9px 11px;background:rgba(0,0,0,.22);border:1px dashed #555862;border-radius:4px;color:#d6d8de;font:700 11px/1.45 "Segoe UI",sans-serif}
 .info{margin-top:11px;padding:11px;border:1px dashed #50535e;background:rgba(0,0,0,.2);color:#cdd0d7;font:600 11px/1.55 "Segoe UI",sans-serif}
 .canvas-area{position:relative;flex:1;min-width:0;overflow:hidden;background:rgba(0,0,0,.15)}
@@ -52,6 +52,9 @@ canvas{display:block;width:100%;height:100%;cursor:grab;touch-action:none}canvas
   <button id="generateButton">GENERATE TREE</button>
   <button id="saveButton">取得状況を保存</button>
   <button id="exportPngButton">CREATE IMAGE</button>
+  <label>Cloudflare Worker URL</label>
+  <input id="workerUrlInput" type="url" placeholder="https://spla3-weapontree-discord.fa127haru.workers.dev">
+  <button id="discordButton">POST TO DISCORD</button>
   <button id="resetButton" class="secondary">RESET PROGRESS</button>
 
   <div class="status" id="status">スキルデータを読み込んでいます...</div>
@@ -65,7 +68,7 @@ canvas{display:block;width:100%;height:100%;cursor:grab;touch-action:none}canvas
     ・3回目のクリック：未取得<br>
     ・ドラッグ：ツリー移動<br>
     ・ホイール / ピンチ：ズーム<br>
-    ・「保存」：このブラウザに取得状況を保存<br><br>
+    ・「保存」：このブラウザに取得状況を保存<br>・「POST TO DISCORD」：Cloudflare Worker経由でDiscordへ画像投稿<br><br>
     <b>共有</b><br>
     SeedはURLにも保存されます。URLを共有すると同じツリーを開けます。
   </div>
@@ -91,6 +94,8 @@ const randomSeedButton=document.getElementById("randomSeedButton");
 const saveButton=document.getElementById("saveButton");
 const resetButton=document.getElementById("resetButton");
 const exportPngButton=document.getElementById("exportPngButton");
+const discordButton=document.getElementById("discordButton");
+const workerUrlInput=document.getElementById("workerUrlInput");
 const statusElement=document.getElementById("status");
 const topInfo=document.getElementById("topInfo");
 const skillDetail=document.getElementById("skillDetail");
@@ -460,154 +465,222 @@ randomSeedButton.addEventListener("click",()=>{seedInput.value=randomSeed();gene
 saveButton.addEventListener("click",saveProgress);
 resetButton.addEventListener("click",resetProgress);
 
+
+function getWorkerUrl(){
+  return workerUrlInput.value.trim();
+}
+
+function waitForHexImages(){
+  return Promise.all(hexes.map(h=>{
+    if(h.image.complete && h.image.naturalWidth>0)return Promise.resolve();
+    return new Promise(resolve=>{
+      const done=()=>{cleanup();resolve()};
+      const cleanup=()=>{
+        h.image.removeEventListener("load",done);
+        h.image.removeEventListener("error",done);
+      };
+      h.image.addEventListener("load",done,{once:true});
+      h.image.addEventListener("error",done,{once:true});
+    });
+  }));
+}
+
+function buildExportCanvas(){
+  if(!hexes.length) throw new Error("ツリーがありません。");
+
+  const radius=HEX_SIZE;
+  const strokeMargin=6;
+  const padding=48;
+  const seedLabelHeight=72;
+  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+
+  for(const h of hexes){
+    const p=hexToPixel(h.q,h.r);
+    minX=Math.min(minX,p.x-radius-strokeMargin);
+    maxX=Math.max(maxX,p.x+radius+strokeMargin);
+    minY=Math.min(minY,p.y-radius-strokeMargin);
+    maxY=Math.max(maxY,p.y+radius+strokeMargin);
+  }
+
+  const contentWidth=maxX-minX;
+  const contentHeight=maxY-minY;
+  const maxDimension=6000;
+  const desiredScale=2;
+  const autoScale=Math.min(
+    desiredScale,
+    maxDimension/(contentWidth+padding*2),
+    maxDimension/(contentHeight+padding*2+seedLabelHeight)
+  );
+  const exportScale=Math.max(0.5,autoScale);
+
+  const width=Math.max(1,Math.ceil((contentWidth+padding*2)*exportScale));
+  const height=Math.max(1,Math.ceil((contentHeight+padding*2+seedLabelHeight)*exportScale));
+
+  const exportCanvas=document.createElement("canvas");
+  exportCanvas.width=width;
+  exportCanvas.height=height;
+
+  const ec=exportCanvas.getContext("2d");
+  ec.setTransform(exportScale,0,0,exportScale,0,0);
+  ec.imageSmoothingEnabled=true;
+  ec.imageSmoothingQuality="high";
+  ec.fillStyle="#0b1020";
+  ec.fillRect(0,0,width/exportScale,height/exportScale);
+
+  const labelY=34;
+  ec.font="900 28px Arial Black, Arial, sans-serif";
+  ec.fillStyle="#f3ff19";
+  ec.textAlign="left";
+  ec.textBaseline="middle";
+  ec.fillText(`SEED: ${getSeed()}`, padding, labelY);
+
+  ec.font="800 13px Segoe UI, Arial, sans-serif";
+  ec.fillStyle="#d8dbe4";
+  ec.fillText(`SKILLS: ${hexes.length}`, padding, labelY+27);
+
+  function exportPoint(x,y){
+    return {x:x-minX+padding,y:y-minY+padding+seedLabelHeight};
+  }
+
+  for(const h of hexes){
+    const hp=hexToPixel(h.q,h.r);
+    const p1=exportPoint(hp.x,hp.y);
+    for(const np of getNeighbors(h.q,h.r)){
+      const other=hexes.find(x=>x.q===np.q&&x.r===np.r);
+      if(!other)continue;
+      if(h.q>other.q||(h.q===other.q&&h.r>other.r))continue;
+      const op=hexToPixel(other.q,other.r);
+      const p2=exportPoint(op.x,op.y);
+      ec.beginPath();
+      ec.moveTo(p1.x,p1.y);
+      ec.lineTo(p2.x,p2.y);
+      const connected=h.obtained&&other.obtained;
+      ec.strokeStyle=connected?"#637dff":"#26324d";
+      ec.lineWidth=connected?4:2;
+      ec.stroke();
+    }
+  }
+
+  for(const h of hexes){
+    const wp=hexToPixel(h.q,h.r);
+    const p=exportPoint(wp.x,wp.y);
+    const size=HEX_SIZE;
+
+    ec.save();
+    ec.beginPath();
+    for(let i=0;i<6;i++){
+      const a=Math.PI/180*(60*i-30);
+      const px=p.x+size*Math.cos(a),py=p.y+size*Math.sin(a);
+      if(i===0)ec.moveTo(px,py);else ec.lineTo(px,py);
+    }
+    ec.closePath();
+
+    ec.fillStyle=h.state===1?"#3e65ff":h.state===2?"#b06cff":isAvailable(h)?"#263b73":"#151d33";
+    ec.fill();
+
+    if(h.image.complete&&h.image.naturalWidth>0){
+      ec.save();
+      ec.clip();
+      const imageSize=size*1.58;
+      const iw=h.image.naturalWidth,ih=h.image.naturalHeight;
+      const imageScale=Math.max(imageSize/iw,imageSize/ih);
+      ec.globalAlpha=h.obtained?1:.78;
+      ec.drawImage(h.image,p.x-iw*imageScale/2,p.y-ih*imageScale/2,iw*imageScale,ih*imageScale);
+      ec.restore();
+    }
+
+    ec.beginPath();
+    for(let i=0;i<6;i++){
+      const a=Math.PI/180*(60*i-30);
+      const px=p.x+size*Math.cos(a),py=p.y+size*Math.sin(a);
+      if(i===0)ec.moveTo(px,py);else ec.lineTo(px,py);
+    }
+    ec.closePath();
+
+    if(h.state===1){ec.strokeStyle="#7f9aff";ec.lineWidth=4}
+    else if(h.state===2){ec.strokeStyle="#d8a8ff";ec.lineWidth=4}
+    else if(isAvailable(h)){ec.strokeStyle="#5f78ff";ec.lineWidth=2.5}
+    else{ec.strokeStyle="#38445f";ec.lineWidth=1.5}
+    ec.stroke();
+    ec.restore();
+  }
+
+  return exportCanvas;
+}
+
+async function createSkillTreeBlob(){
+  await waitForHexImages();
+  const c=buildExportCanvas();
+  return await new Promise((resolve,reject)=>{
+    c.toBlob(blob=>{
+      if(blob)resolve(blob);
+      else reject(new Error("PNGの生成に失敗しました。"));
+    },"image/png");
+  });
+}
+
+discordButton.addEventListener("click",async()=>{
+  const url=getWorkerUrl();
+  if(!url){
+    alert("Cloudflare Worker URLを入力してください。");
+    workerUrlInput.focus();
+    return;
+  }
+  if(!/^https:\/\/.+/i.test(url)){
+    alert("Worker URLは https:// から始まるURLを入力してください。");
+    return;
+  }
+  if(!hexes.length)return;
+
+  const button=discordButton;
+  const originalText=button.textContent;
+  button.disabled=true;
+  button.textContent="DISCORDへ送信中…";
+
+  try{
+    const blob=await createSkillTreeBlob();
+    const form=new FormData();
+    form.append("seed",getSeed());
+    form.append("count",String(hexes.length));
+    form.append("treeUrl",location.href);
+    form.append("image",blob,`skilltree_${getSeed()}.png`);
+
+    const response=await fetch(url,{
+      method:"POST",
+      body:form
+    });
+
+    const text=await response.text();
+    if(!response.ok)throw new Error(text||`HTTP ${response.status}`);
+
+    statusElement.textContent=`Discordへ投稿しました。Seed「${getSeed()}」`;
+  }catch(error){
+    console.error(error);
+    alert(`Discordへの投稿に失敗しました。\n${error.message}`);
+  }finally{
+    button.disabled=false;
+    button.textContent=originalText;
+  }
+});
+
 exportPngButton.addEventListener("click",async()=>{
   if(!hexes.length)return;
 
-  // 現在の画面のズーム・移動位置は一切使わず、
-  // ツリー自身の全ノード座標から画像サイズを決定します。
-  // そのため、どれだけ拡大・移動していても必ず全体が入ります。
   const button=exportPngButton;
   const originalText=button.textContent;
   button.disabled=true;
   button.textContent="画像を生成中…";
 
   try{
-    // 画像の読み込みがまだ終わっていない場合でも、
-    // 生成時には全画像を待ってから描画します。
-    await Promise.all(hexes.map(h=>{
-      if(h.image.complete && h.image.naturalWidth>0)return Promise.resolve();
-      return new Promise(resolve=>{
-        const done=()=>{cleanup();resolve()};
-        const cleanup=()=>{
-          h.image.removeEventListener("load",done);
-          h.image.removeEventListener("error",done);
-        };
-        h.image.addEventListener("load",done,{once:true});
-        h.image.addEventListener("error",done,{once:true});
-      });
-    }));
-
-    // 六角形の外周 + 線幅を確実に含める。
-    const radius=HEX_SIZE;
-    const strokeMargin=6;
-    const padding=48;
-    let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
-
-    for(const h of hexes){
-      const p=hexToPixel(h.q,h.r);
-      minX=Math.min(minX,p.x-radius-strokeMargin);
-      maxX=Math.max(maxX,p.x+radius+strokeMargin);
-      minY=Math.min(minY,p.y-radius-strokeMargin);
-      maxY=Math.max(maxY,p.y+radius+strokeMargin);
-    }
-
-    const contentWidth=maxX-minX;
-    const contentHeight=maxY-minY;
-
-    // 基本は2倍解像度。巨大なツリーだけ自動的に縮小して、
-    // スマホでもブラウザがCanvas上限で失敗しにくいようにします。
-    const maxDimension=6000;
-    const desiredScale=2;
-    const autoScale=Math.min(
-      desiredScale,
-      maxDimension/(contentWidth+padding*2),
-      maxDimension/(contentHeight+padding*2)
-    );
-    const exportScale=Math.max(0.5,autoScale);
-
-    const width=Math.max(1,Math.ceil((contentWidth+padding*2)*exportScale));
-    const height=Math.max(1,Math.ceil((contentHeight+padding*2)*exportScale));
-
-    const exportCanvas=document.createElement("canvas");
-    exportCanvas.width=width;
-    exportCanvas.height=height;
-
-    const ec=exportCanvas.getContext("2d");
-    ec.setTransform(exportScale,0,0,exportScale,0,0);
-    ec.imageSmoothingEnabled=true;
-    ec.imageSmoothingQuality="high";
-    ec.fillStyle="#0b1020";
-    ec.fillRect(0,0,width/exportScale,height/exportScale);
-
-    function exportPoint(x,y){
-      return {x:x-minX+padding,y:y-minY+padding};
-    }
-
-    // 接続線を描画
-    for(const h of hexes){
-      const hp=hexToPixel(h.q,h.r);
-      const p1=exportPoint(hp.x,hp.y);
-      for(const np of getNeighbors(h.q,h.r)){
-        const other=hexes.find(x=>x.q===np.q&&x.r===np.r);
-        if(!other)continue;
-        if(h.q>other.q||(h.q===other.q&&h.r>other.r))continue;
-
-        const op=hexToPixel(other.q,other.r);
-        const p2=exportPoint(op.x,op.y);
-        ec.beginPath();
-        ec.moveTo(p1.x,p1.y);
-        ec.lineTo(p2.x,p2.y);
-        const connected=h.obtained&&other.obtained;
-        ec.strokeStyle=connected?"#637dff":"#26324d";
-        ec.lineWidth=connected?4:2;
-        ec.stroke();
-      }
-    }
-
-    // 全ノードを描画
-    for(const h of hexes){
-      const wp=hexToPixel(h.q,h.r);
-      const p=exportPoint(wp.x,wp.y);
-      const size=HEX_SIZE;
-
-      ec.save();
-      ec.beginPath();
-      for(let i=0;i<6;i++){
-        const a=Math.PI/180*(60*i-30);
-        const px=p.x+size*Math.cos(a);
-        const py=p.y+size*Math.sin(a);
-        if(i===0)ec.moveTo(px,py);else ec.lineTo(px,py);
-      }
-      ec.closePath();
-
-      ec.fillStyle=h.state===1?"#3e65ff":h.state===2?"#b06cff":isAvailable(h)?"#263b73":"#151d33";
-      ec.fill();
-
-      if(h.image.complete&&h.image.naturalWidth>0){
-        ec.save();
-        ec.clip();
-        const imageSize=size*1.58;
-        const iw=h.image.naturalWidth,ih=h.image.naturalHeight;
-        const imageScale=Math.max(imageSize/iw,imageSize/ih);
-        ec.globalAlpha=h.obtained?1:.78;
-        ec.drawImage(h.image,p.x-iw*imageScale/2,p.y-ih*imageScale/2,iw*imageScale,ih*imageScale);
-        ec.restore();
-      }
-
-      ec.beginPath();
-      for(let i=0;i<6;i++){
-        const a=Math.PI/180*(60*i-30);
-        const px=p.x+size*Math.cos(a);
-        const py=p.y+size*Math.sin(a);
-        if(i===0)ec.moveTo(px,py);else ec.lineTo(px,py);
-      }
-      ec.closePath();
-
-      if(h.state===1){ec.strokeStyle="#7f9aff";ec.lineWidth=4}
-      else if(h.state===2){ec.strokeStyle="#d8a8ff";ec.lineWidth=4}
-      else if(isAvailable(h)){ec.strokeStyle="#5f78ff";ec.lineWidth=2.5}
-      else{ec.strokeStyle="#38445f";ec.lineWidth=1.5}
-      ec.stroke();
-      ec.restore();
-    }
-
+    await waitForHexImages();
+    const exportCanvas=buildExportCanvas();
     const dataUrl=exportCanvas.toDataURL("image/png");
     const tab=window.open("","_blank");
     if(!tab){
       alert("ポップアップを許可してください。");
       return;
     }
-    tab.document.write(`<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Skill Tree</title><style>html,body{margin:0;background:#0b1020}body{display:flex;justify-content:center;align-items:flex-start;overflow:auto;padding:12px}img{display:block;width:auto;height:auto;max-width:none}</style></head><body><img src="${dataUrl}" alt="Skill Tree"></body></html>`);
+    tab.document.write(`<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Skill Tree - Seed ${getSeed()}</title><style>html,body{margin:0;background:#0b1020}body{display:flex;justify-content:center;align-items:flex-start;overflow:auto;padding:12px}img{display:block;width:auto;height:auto;max-width:none}</style></head><body><img src="${dataUrl}" alt="Skill Tree"></body></html>`);
     tab.document.close();
   }catch(error){
     console.error(error);
