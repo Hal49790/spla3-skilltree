@@ -64,8 +64,6 @@ canvas{display:block;width:100%;height:100%;cursor:grab;touch-action:none}canvas
     <button type="button" class="channel-button" data-channel="beta">ベータ</button>
   </div>
 
-  <label>Cloudflare Worker URL</label>
-  <input id="workerUrlInput" type="url" value="https://spla3-weapontree-discord.fa127haru.workers.dev" placeholder="https://xxxxxx">
   <button id="discordButton">POST TO DISCORD</button>
   <button id="resetButton" class="secondary">RESET PROGRESS</button>
 
@@ -107,7 +105,7 @@ const saveButton=document.getElementById("saveButton");
 const resetButton=document.getElementById("resetButton");
 const exportPngButton=document.getElementById("exportPngButton");
 const discordButton=document.getElementById("discordButton");
-const workerUrlInput=document.getElementById("workerUrlInput");
+const WORKER_URL="https://spla3-weapontree-discord.fa127haru.workers.dev";
 const passwordInput=document.getElementById("passwordInput");
 const channelButtons=[...document.querySelectorAll(".channel-button")];
 const statusElement=document.getElementById("status");
@@ -488,9 +486,7 @@ channelButtons.forEach(button=>{
   });
 });
 
-function getWorkerUrl(){
-  return workerUrlInput.value.trim();
-}
+
 
 function waitForHexImages(){
   return Promise.all(hexes.map(h=>{
@@ -642,19 +638,8 @@ async function createSkillTreeBlob(){
 }
 
 discordButton.addEventListener("click",async()=>{
-  const url=getWorkerUrl();
+  const url=WORKER_URL;
   const password=passwordInput.value;
-
-  if(!url){
-    alert("Cloudflare Worker URLを入力してください。");
-    workerUrlInput.focus();
-    return;
-  }
-
-  if(!/^https:\/\/.+/i.test(url)){
-    alert("Worker URLは https:// から始まるURLを入力してください。");
-    return;
-  }
 
   if(!password){
     alert("Discord投稿パスワードを入力してください。");
