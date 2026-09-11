@@ -22,6 +22,9 @@ input:focus{border-color:var(--yellow);box-shadow:0 0 0 3px rgba(243,255,25,.12)
 button{width:100%;padding:12px 11px;margin-top:8px;border:0;border-radius:7px;background:#343640;color:#fff;font-size:14px;font-weight:1000;cursor:pointer;box-shadow:4px 4px 0 rgba(0,0,0,.5)}
 button:hover{filter:brightness(1.1);transform:translate(-1px,-1px)}button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 rgba(0,0,0,.5)}
 #generateButton{background:var(--yellow);color:#07090c;font-size:17px}#exportPngButton{background:var(--pink);color:#08090d;font-size:16px}#discordButton{background:var(--cyan);color:#061014;font-size:16px}
+.channel-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.channel-row .channel-button{margin-top:0;background:#343640;color:#fff}
+.channel-row .channel-button.selected{background:var(--purple);color:#fff;box-shadow:4px 4px 0 rgba(0,0,0,.5)}
 .status{margin-top:12px;padding:9px 11px;background:rgba(0,0,0,.22);border:1px dashed #555862;border-radius:4px;color:#d6d8de;font:700 11px/1.45 "Segoe UI",sans-serif}
 .info{margin-top:11px;padding:11px;border:1px dashed #50535e;background:rgba(0,0,0,.2);color:#cdd0d7;font:600 11px/1.55 "Segoe UI",sans-serif}
 .canvas-area{position:relative;flex:1;min-width:0;overflow:hidden;background:rgba(0,0,0,.15)}
@@ -52,8 +55,17 @@ canvas{display:block;width:100%;height:100%;cursor:grab;touch-action:none}canvas
   <button id="generateButton">GENERATE TREE</button>
   <button id="saveButton">取得状況を保存</button>
   <button id="exportPngButton">CREATE IMAGE</button>
+  <label>Discord投稿パスワード</label>
+  <input id="passwordInput" type="password" placeholder="パスワードを入力" autocomplete="off">
+
+  <label>投稿先</label>
+  <div class="channel-row">
+    <button type="button" class="channel-button selected" data-channel="alpha">アルファ</button>
+    <button type="button" class="channel-button" data-channel="beta">ベータ</button>
+  </div>
+
   <label>Cloudflare Worker URL</label>
-  <input id="workerUrlInput" type="url" placeholder="https://xxxxxx">
+  <input id="workerUrlInput" type="url" value="https://spla3-weapontree-discord.fa127haru.workers.dev" placeholder="https://xxxxxx">
   <button id="discordButton">POST TO DISCORD</button>
   <button id="resetButton" class="secondary">RESET PROGRESS</button>
 
@@ -68,7 +80,7 @@ canvas{display:block;width:100%;height:100%;cursor:grab;touch-action:none}canvas
     ・3回目のクリック：未取得<br>
     ・ドラッグ：ツリー移動<br>
     ・ホイール / ピンチ：ズーム<br>
-    ・「保存」：このブラウザに取得状況を保存<br>・「POST TO DISCORD」：Cloudflare Worker経由でDiscordへ画像投稿<br><br>
+    ・「保存」：このブラウザに取得状況を保存<br>・「POST TO DISCORD」：パスワード認証後、アルファ / ベータの選択先へCloudflare Worker経由で画像投稿<br><br>
     <b>共有</b><br>
     SeedはURLにも保存されます。URLを共有すると同じツリーを開けます。
   </div>
@@ -96,7 +108,10 @@ const resetButton=document.getElementById("resetButton");
 const exportPngButton=document.getElementById("exportPngButton");
 const discordButton=document.getElementById("discordButton");
 const workerUrlInput=document.getElementById("workerUrlInput");
+const passwordInput=document.getElementById("passwordInput");
+const channelButtons=[...document.querySelectorAll(".channel-button")];
 const statusElement=document.getElementById("status");
+let selectedChannel="alpha";
 const topInfo=document.getElementById("topInfo");
 const skillDetail=document.getElementById("skillDetail");
 const detailName=document.getElementById("detailName");
@@ -466,6 +481,13 @@ saveButton.addEventListener("click",saveProgress);
 resetButton.addEventListener("click",resetProgress);
 
 
+channelButtons.forEach(button=>{
+  button.addEventListener("click",()=>{
+    selectedChannel=button.dataset.channel;
+    channelButtons.forEach(b=>b.classList.toggle("selected",b===button));
+  });
+});
+
 function getWorkerUrl(){
   return workerUrlInput.value.trim();
 }
@@ -621,15 +643,30 @@ async function createSkillTreeBlob(){
 
 discordButton.addEventListener("click",async()=>{
   const url=getWorkerUrl();
+  const password=passwordInput.value;
+
   if(!url){
     alert("Cloudflare Worker URLを入力してください。");
     workerUrlInput.focus();
     return;
   }
+
   if(!/^https:\/\/.+/i.test(url)){
     alert("Worker URLは https:// から始まるURLを入力してください。");
     return;
   }
+
+  if(!password){
+    alert("Discord投稿パスワードを入力してください。");
+    passwordInput.focus();
+    return;
+  }
+
+  if(selectedChannel!=="alpha" && selectedChannel!=="beta"){
+    alert("投稿先を選択してください。");
+    return;
+  }
+
   if(!hexes.length)return;
 
   const button=discordButton;
@@ -640,6 +677,9 @@ discordButton.addEventListener("click",async()=>{
   try{
     const blob=await createSkillTreeBlob();
     const form=new FormData();
+
+    form.append("password",password);
+    form.append("channel",selectedChannel);
     form.append("seed",getSeed());
     form.append("count",String(hexes.length));
     form.append("treeUrl",location.href);
@@ -650,10 +690,19 @@ discordButton.addEventListener("click",async()=>{
       body:form
     });
 
-    const text=await response.text();
-    if(!response.ok)throw new Error(text||`HTTP ${response.status}`);
+    const responseText=await response.text();
 
-    statusElement.textContent=`Discordへ投稿しました。Seed「${getSeed()}」`;
+    let result=null;
+    try{ result=JSON.parse(responseText); }catch(_){}
+
+    if(!response.ok){
+      throw new Error(result?.error || responseText || `HTTP ${response.status}`);
+    }
+
+    statusElement.textContent=
+      `Discordの${selectedChannel==="alpha"?"アルファ":"ベータ"}へ投稿しました。Seed「${getSeed()}」`;
+
+    passwordInput.value="";
   }catch(error){
     console.error(error);
     alert(`Discordへの投稿に失敗しました。\n${error.message}`);
@@ -662,6 +711,7 @@ discordButton.addEventListener("click",async()=>{
     button.textContent=originalText;
   }
 });
+
 
 exportPngButton.addEventListener("click",async()=>{
   if(!hexes.length)return;
