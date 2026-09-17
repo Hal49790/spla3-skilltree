@@ -52,6 +52,8 @@ canvas{display:block;width:100%;height:100%;cursor:grab;touch-action:none}canvas
 .tier-item{width:43px;height:43px;border:1px solid #555966;border-radius:4px;background:#090b10;cursor:grab;overflow:hidden;position:relative;touch-action:none}
 .tier-item:active{cursor:grabbing}
 .tier-item img{width:100%;height:100%;object-fit:cover;display:block}
+.tier-image-error{background:#4a2020}
+.tier-image-error::after{content:"画像エラー";display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:8px;color:#fff}
 .tier-item .tier-point{position:absolute;right:1px;bottom:1px;padding:1px 3px;border-radius:3px;background:rgba(0,0,0,.78);font:900 9px Arial,sans-serif;color:#fff}
 .tier-unassigned{margin-top:7px;border:1px dashed #555862;border-radius:5px;padding:5px}
 .tier-unassigned-title{font:900 10px "Segoe UI",sans-serif;color:var(--yellow);margin-bottom:4px}
@@ -71,7 +73,7 @@ canvas{display:block;width:100%;height:100%;cursor:grab;touch-action:none}canvas
 <div class="app">
 <aside class="sidebar">
   <div class="title">SPLA3 WEAPON TREE</div>
-  <div class="subtitle">Seedから同じスキルツリーを再現</div>
+  <div class="subtitle">スプラトゥーン3ブキツリー</div>
 
   <label>Seed</label>
   <div class="seed-row">
@@ -664,9 +666,13 @@ function createTierItem(skill){
   item.title=`${skill.name} / ${skill.filename}`;
 
   const img=document.createElement("img");
-  img.src="./assets/skills/"+encodeURIComponent(skill.filename);
+  img.src="./assets/skills/"+skill.filename.split("/").map(encodeURIComponent).join("/");
   img.alt=skill.name;
   img.draggable=false;
+  img.addEventListener("error",()=>{
+    item.classList.add("tier-image-error");
+    item.title=`画像を読み込めません: ${skill.filename}`;
+  });
   item.appendChild(img);
 
   const point=document.createElement("span");
