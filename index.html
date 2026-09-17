@@ -32,6 +32,36 @@ canvas{display:block;width:100%;height:100%;cursor:grab;touch-action:none}canvas
 .top-info{position:absolute;right:14px;top:14px;z-index:5;padding:8px 11px;border:2px solid #383b46;border-radius:7px;background:rgba(7,9,14,.78);color:#e9eaee;font:800 11px "Segoe UI",sans-serif;backdrop-filter:blur(8px)}
 .skill-detail{position:absolute;right:16px;bottom:16px;width:285px;z-index:8;display:none;padding:15px;background:rgba(7,9,14,.95);border:2px solid #444752;border-radius:9px;box-shadow:0 15px 35px rgba(0,0,0,.48)}
 .skill-detail.show{display:block}.skill-detail h2,.skill-detail h3{margin:0 0 6px;color:var(--pink);font-size:21px}.skill-detail p{margin:0;color:#dfe1e6;font:700 12px/1.45 "Segoe UI",sans-serif}
+
+.tier-mode-box{margin-top:8px}
+#tierModeButton{background:var(--purple);color:#fff;font-size:14px}
+.tier-sub-button{background:#343640;color:#fff;font-size:11px;margin-top:5px}
+.tier-panel{display:none;margin-top:8px;padding:9px;background:rgba(0,0,0,.28);border:1px solid #3e414c;border-radius:7px}
+.tier-panel.show{display:block}
+.tier-help{font:700 10px/1.4 "Segoe UI",sans-serif;color:#cfd2da;margin-bottom:7px}
+.tier-total{font:1000 12px "Segoe UI",sans-serif;color:var(--yellow);margin-bottom:6px}
+.tier-list{display:flex;flex-direction:column;gap:5px}
+.tier-row{display:flex;min-height:55px;border:1px solid #454854;border-radius:5px;overflow:hidden;background:#10131c}
+.tier-label{width:46px;min-width:46px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:1000;background:#272a35}
+.tier-row[data-tier="1"] .tier-label{background:#3e65ff}
+.tier-row[data-tier="2"] .tier-label{background:#5c78ff}
+.tier-row[data-tier="3"] .tier-label{background:#8b72ff}
+.tier-row[data-tier="4"] .tier-label{background:#b06cff}
+.tier-row[data-tier="5"] .tier-label{background:#d65cff}
+.tier-items{display:flex;flex-wrap:wrap;gap:4px;padding:4px;align-content:flex-start;min-height:53px;flex:1}
+.tier-item{width:43px;height:43px;border:1px solid #555966;border-radius:4px;background:#090b10;cursor:grab;overflow:hidden;position:relative;touch-action:none}
+.tier-item:active{cursor:grabbing}
+.tier-item img{width:100%;height:100%;object-fit:cover;display:block}
+.tier-item .tier-point{position:absolute;right:1px;bottom:1px;padding:1px 3px;border-radius:3px;background:rgba(0,0,0,.78);font:900 9px Arial,sans-serif;color:#fff}
+.tier-unassigned{margin-top:7px;border:1px dashed #555862;border-radius:5px;padding:5px}
+.tier-unassigned-title{font:900 10px "Segoe UI",sans-serif;color:var(--yellow);margin-bottom:4px}
+.tier-code-box{margin-top:8px}
+.tier-code-box textarea{width:100%;height:82px;box-sizing:border-box;resize:vertical;background:#090b10;color:#dfe2e8;border:1px solid #4b4e59;border-radius:4px;padding:6px;font:10px/1.35 Consolas,monospace}
+.tier-code-buttons{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:5px}
+
+.tier-unassigned .tier-items{max-height:190px;overflow:auto}
+.tier-drag-over{outline:2px solid var(--yellow);outline-offset:-2px}
+
 @media(max-width:700px){.app{display:block;height:100dvh}.sidebar{position:absolute;left:0;right:0;top:0;width:auto;min-width:0;max-height:40dvh;padding:11px 12px 9px;z-index:20;border-right:0;border-bottom:2px solid #292c36;background:rgba(7,9,14,.95);backdrop-filter:blur(10px)}.title{font-size:25px;margin:0 0 2px}.subtitle{font-size:9px;padding:4px 8px;margin-bottom:6px}.asset-status{padding:6px 8px;font-size:9px}label{font-size:10px;margin:6px 0 3px}input{padding:8px;font-size:13px}button{padding:8px;margin-top:5px;font-size:11px}#generateButton,#exportPngButton{font-size:12px}.info{display:none}.status{margin-top:5px;padding:6px;font-size:9px}.canvas-area{position:absolute;inset:0;width:100%;height:100dvh}.top-info{right:7px;bottom:7px;top:auto;font-size:9px;padding:5px 7px}.skill-detail{left:9px;right:9px;bottom:34px;width:auto;max-height:25dvh;padding:11px}}
 @media(max-width:420px){.title{font-size:22px}.sidebar{max-height:42dvh}}
 </style>
@@ -65,6 +95,30 @@ canvas{display:block;width:100%;height:100%;cursor:grab;touch-action:none}canvas
   </div>
 
   <button id="discordButton">POST TO DISCORD</button>
+
+  <div class="tier-mode-box">
+    <button type="button" id="tierModeButton">武器ポイント設定</button>
+    <button type="button" id="tierResetButton" class="tier-sub-button">初期配置に戻す</button>
+      <button type="button" id="tierSaveDefaultButton" class="tier-sub-button">現在の配置を初期配置として保存</button>
+    <div id="tierPanel" class="tier-panel">
+      <div class="tier-help">武器をドラッグしてTier 1～5へ配置してください。</div>
+      <div class="tier-total" id="tierTotal">使用済み武器ポイント: 0pt</div>
+      <div class="tier-list" id="tierList"></div>
+      <div class="tier-unassigned">
+        <div class="tier-unassigned-title">未配置の武器</div>
+        <div class="tier-items" id="tierUnassigned"></div>
+      </div>
+      <div class="tier-code-box">
+        <div class="tier-unassigned-title">初期配置コード</div>
+        <textarea id="tierCode" spellcheck="false" placeholder="ここに初期配置コードを貼り付け"></textarea>
+        <div class="tier-code-buttons">
+          <button type="button" id="tierCopyCodeButton" class="tier-sub-button">現在の配置をコード化</button>
+          <button type="button" id="tierApplyCodeButton" class="tier-sub-button">コードから初期配置を読み込む</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <button id="resetButton" class="secondary">RESET PROGRESS</button>
 
   <div class="status" id="status">スキルデータを読み込んでいます...</div>
@@ -114,6 +168,28 @@ const topInfo=document.getElementById("topInfo");
 const skillDetail=document.getElementById("skillDetail");
 const detailName=document.getElementById("detailName");
 const detailText=document.getElementById("detailText");
+const tierModeButton=document.getElementById("tierModeButton");
+const tierResetButton=document.getElementById("tierResetButton");
+const tierPanel=document.getElementById("tierPanel");
+const tierSaveDefaultButton=document.getElementById("tierSaveDefaultButton");
+const tierCopyCodeButton=document.getElementById("tierCopyCodeButton");
+const tierApplyCodeButton=document.getElementById("tierApplyCodeButton");
+const tierCode=document.getElementById("tierCode");
+const tierTotal=document.getElementById("tierTotal");
+const tierList=document.getElementById("tierList");
+const tierUnassigned=document.getElementById("tierUnassigned");
+
+let tierMode=false;
+let tierAssignments={}; // filename -> tier number; 1-5, or 0 for unassigned
+let tierDragFilename=null;
+
+// 初期配置。
+// ここに filename を追加すると、最初からそのTierに配置されます。
+// 未指定の武器は「未配置」に入ります。
+const DEFAULT_TIER_ASSIGNMENTS = {
+  // "example.png": 1,
+  // "example2.png": 3,
+};
 
 const HEX_SIZE=55;
 const DIRECTIONS=[[1,0],[1,-1],[0,-1],[-1,0],[-1,1],[0,1]];
@@ -166,6 +242,8 @@ async function loadSkills(){
     if(!res.ok) throw new Error("skills.jsonを読み込めません");
     allSkills=await res.json();
     allSkills=allSkills.filter(x=>x&&x.filename&&x.name);
+    initializeTierAssignments();
+    restoreTierAssignments();
     countInput.max=allSkills.length;
     statusElement.textContent=`${allSkills.length}個のスキルを読み込みました。`;
     dataLoaded=true;
@@ -335,6 +413,8 @@ function draw(){
     const p=hexToPixel(h.q,h.r),s=worldToScreen(p.x,p.y);
     drawHex(s.x,s.y,HEX_SIZE*zoom,h);
   }
+
+  updateUsedWeaponPoints();
 }
 function getHexAtMouse(x,y){
   for(let i=hexes.length-1;i>=0;i--){
@@ -487,6 +567,263 @@ channelButtons.forEach(button=>{
 });
 
 
+
+
+function getTierStorageKey(){
+  return "spla3-weapon-tiers-v1";
+}
+
+function getTierDefaultStorageKey(){
+  return "spla3-weapon-tiers-default-v1";
+}
+
+function normalizeTierAssignments(source){
+  const result={};
+  for(const skill of allSkills){
+    const t=Number(source && source[skill.filename] || 0);
+    result[skill.filename]=(t>=1&&t<=5)?t:0;
+  }
+  return result;
+}
+
+function initializeTierAssignments(){
+  tierAssignments=normalizeTierAssignments(DEFAULT_TIER_ASSIGNMENTS);
+}
+
+function saveTierAssignments(){
+  localStorage.setItem(getTierStorageKey(),JSON.stringify(tierAssignments));
+}
+
+function restoreTierAssignments(){
+  try{
+    const raw=localStorage.getItem(getTierStorageKey());
+    if(!raw)return false;
+    const saved=JSON.parse(raw);
+    if(!saved||typeof saved!=="object")return false;
+    tierAssignments=normalizeTierAssignments(saved);
+    return true;
+  }catch(e){
+    console.error(e);
+    return false;
+  }
+}
+
+function saveCurrentAsDefault(){
+  localStorage.setItem(getTierDefaultStorageKey(),JSON.stringify(tierAssignments));
+  alert("現在のTier配置を初期配置として保存しました。");
+}
+
+function resetTierAssignments(){
+  try{
+    const raw=localStorage.getItem(getTierDefaultStorageKey());
+    if(raw){
+      tierAssignments=normalizeTierAssignments(JSON.parse(raw));
+    }else{
+      initializeTierAssignments();
+    }
+  }catch(e){
+    initializeTierAssignments();
+  }
+  saveTierAssignments();
+  renderTierPanel();
+}
+
+function getUsedWeaponFilenames(){
+  const used=new Set();
+
+  // The current tree stores selected skill indexes in selected.
+  // Read the selected entries and map them back to allSkills.
+  if(Array.isArray(selected)){
+    for(const idx of selected){
+      const skill=allSkills[idx];
+      if(skill&&skill.filename)used.add(skill.filename);
+    }
+  }
+
+  return used;
+}
+
+function getTierPoint(filename){
+  const t=Number(tierAssignments[filename]||0);
+  return t>=1&&t<=5?t:0;
+}
+
+function updateUsedWeaponPoints(){
+  if(!tierTotal)return;
+  const used=getUsedWeaponFilenames();
+  let total=0;
+  for(const filename of used) total+=getTierPoint(filename);
+  tierTotal.textContent=`使用済み武器ポイント: ${total}pt`;
+}
+
+function createTierItem(skill){
+  const item=document.createElement("div");
+  item.className="tier-item";
+  item.draggable=true;
+  item.dataset.filename=skill.filename;
+  item.title=`${skill.name} / ${skill.filename}`;
+
+  const img=document.createElement("img");
+  img.src="./assets/skills/"+encodeURIComponent(skill.filename);
+  img.alt=skill.name;
+  img.draggable=false;
+  item.appendChild(img);
+
+  const point=document.createElement("span");
+  point.className="tier-point";
+  const t=getTierPoint(skill.filename);
+  point.textContent=t?`${t}pt`:"";
+  item.appendChild(point);
+
+  item.addEventListener("dragstart",e=>{
+    tierDragFilename=skill.filename;
+    e.dataTransfer.effectAllowed="move";
+    e.dataTransfer.setData("text/plain",skill.filename);
+  });
+  item.addEventListener("dragend",()=>{
+    tierDragFilename=null;
+    document.querySelectorAll(".tier-drag-over").forEach(x=>x.classList.remove("tier-drag-over"));
+  });
+  return item;
+}
+
+function addTierDropHandlers(element,tier){
+  element.addEventListener("dragover",e=>{
+    e.preventDefault();
+    e.dataTransfer.dropEffect="move";
+    element.classList.add("tier-drag-over");
+  });
+  element.addEventListener("dragleave",()=>{
+    element.classList.remove("tier-drag-over");
+  });
+  element.addEventListener("drop",e=>{
+    e.preventDefault();
+    element.classList.remove("tier-drag-over");
+    const filename=tierDragFilename||e.dataTransfer.getData("text/plain");
+    if(!filename)return;
+    tierAssignments[filename]=tier;
+    saveTierAssignments();
+    renderTierPanel();
+  });
+}
+
+function renderTierPanel(){
+  tierList.innerHTML="";
+  tierUnassigned.innerHTML="";
+
+  const byTier=[[],[],[],[],[]];
+  const unassigned=[];
+
+  for(const skill of allSkills){
+    const t=getTierPoint(skill.filename);
+    if(t)byTier[t-1].push(skill);
+    else unassigned.push(skill);
+  }
+
+  for(let i=1;i<=5;i++){
+    const row=document.createElement("div");
+    row.className="tier-row";
+    row.dataset.tier=String(i);
+
+    const label=document.createElement("div");
+    label.className="tier-label";
+    label.textContent=`TIER ${i}`;
+    row.appendChild(label);
+
+    const items=document.createElement("div");
+    items.className="tier-items";
+    byTier[i-1].forEach(skill=>items.appendChild(createTierItem(skill)));
+    row.appendChild(items);
+    tierList.appendChild(row);
+    addTierDropHandlers(items,i);
+  }
+
+  const unassignedItems=document.createElement("div");
+  unassignedItems.className="tier-items";
+  unassigned.forEach(skill=>unassignedItems.appendChild(createTierItem(skill)));
+  tierUnassigned.appendChild(unassignedItems);
+  addTierDropHandlers(unassignedItems,0);
+
+  const used=getUsedWeaponFilenames();
+  let total=0;
+  for(const filename of used){
+    total+=getTierPoint(filename);
+  }
+  tierTotal.textContent=`使用済み武器ポイント: ${total}pt`;
+}
+
+
+function makeTierCode(){
+  const code={1:[],2:[],3:[],4:[],5:[]};
+  for(const skill of allSkills){
+    const t=getTierPoint(skill.filename);
+    if(t) code[t].push(skill.filename);
+  }
+  return JSON.stringify(code,null,2);
+}
+
+function applyTierCode(){
+  try{
+    const parsed=JSON.parse(tierCode.value);
+    if(!parsed || typeof parsed!=="object") throw new Error("invalid");
+
+    const byFilename=new Map(allSkills.map(skill=>[skill.filename,skill]));
+    const next={};
+    for(const skill of allSkills) next[skill.filename]=0;
+
+    for(let t=1;t<=5;t++){
+      const list=Array.isArray(parsed[t])?parsed[t]:[];
+      for(const filename of list){
+        if(byFilename.has(filename)){
+          next[filename]=t;
+        }
+      }
+    }
+
+    tierAssignments=next;
+    saveTierAssignments();
+    localStorage.setItem(getTierDefaultStorageKey(),JSON.stringify(tierAssignments));
+    renderTierPanel();
+    alert("初期配置をコードから読み込みました。");
+  }catch(e){
+    alert("コードを読み込めませんでした。JSON形式を確認してください。");
+  }
+}
+
+function toggleTierMode(){
+  tierMode=!tierMode;
+  tierPanel.classList.toggle("show",tierMode);
+  tierModeButton.textContent=tierMode?"武器ポイント設定を閉じる":"武器ポイント設定";
+  if(tierMode)renderTierPanel();
+}
+
+tierModeButton.addEventListener("click",toggleTierMode);
+tierResetButton.addEventListener("click",()=>{
+  if(confirm("武器Tierの配置を初期状態に戻しますか？")){
+    resetTierAssignments();
+  }
+});
+
+tierSaveDefaultButton.addEventListener("click",()=>{
+  saveCurrentAsDefault();
+});
+
+tierCopyCodeButton.addEventListener("click",async()=>{
+  const code=makeTierCode();
+  tierCode.value=code;
+  try{
+    await navigator.clipboard.writeText(code);
+    alert("現在のTier配置をコード化してコピーしました。");
+  }catch(e){
+    alert("コードを作成しました。テキスト欄からコピーしてください。");
+  }
+});
+
+tierApplyCodeButton.addEventListener("click",()=>{
+  if(confirm("このコードを初期配置として読み込みますか？")){
+    applyTierCode();
+  }
+});
 
 function waitForHexImages(){
   return Promise.all(hexes.map(h=>{
